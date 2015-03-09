@@ -1,0 +1,561 @@
+
+
+<!-- Jquery -->
+<script src = "jquery.min.js"> </script>
+
+<!-- Lets make a simple snake game -->
+<div id = "startMenu" style = "text-align:center"> 
+	<button id = "btnStart">START</button> 
+</div>
+
+<div style="text-align:center">
+	<canvas  id="canvas1" width="450" height="50"></canvas>
+</div>
+
+<div class = "playing" style = "text-align:center" >
+	<canvas id="canvas" width="450" height="450" ></canvas>
+</div>
+
+<div class = 'hidden' id = 'restartMenu' style = "text-align:center">
+	<h1 id = "gameOver">GAME OVER<h1>
+	<a href = "#" id = "btnRestart">RESTART</a> 
+	<a href = "#" id = "btnHighScore">High Scores</a>
+</div>
+
+<div id = "highScoreMenu"class = 'hidden' style = "text-align:center" >
+	<table id = 'highScoreTable' >
+	  <tr>
+	    <td>Jill</td>
+	    <td>Smith</td> 
+	    <td>50</td>
+	  </tr>
+	  <tr>
+	    <td>Eve</td>
+	    <td>Jackson</td> 
+	    <td>94</td>
+	  </tr>
+	</table>
+
+	<a href = "#" id = "goBack">GO BACK</a>
+
+</div>
+
+<head>
+<link rel="stylesheet" type="text/css" href="Snake.css">
+</head>
+
+
+<script type = "text/javascript">
+
+// TO DO LIST
+// set up high scores menu
+// make red food not conflict with trees
+// separate restart buttons from high schores button
+//  
+
+$(document).ready(function(){
+
+	//Canvas stuff
+	var canvas = $("#canvas")[0];
+	var ctx = canvas.getContext("2d");
+	var w = $("#canvas").width();
+	var h = $("#canvas").height();
+
+	var canvas1 = $("#canvas1")[0];
+	var ctx1 = canvas1.getContext("2d");
+	var w1 = $("#canvas1").width();
+	var h1 = $("#canvas1").height();
+	
+	//Lets save the cell width in a variable for easy control
+	var cw = 10;
+	var d;
+	var score;
+	var foodArray = [];
+	var obstacleArray = [];
+	var wallArray = [];
+	var gateArray = [];
+	var snake_array; //an array of cells to make up the snake
+	var snake_array_extra = []; // array of cells snake accumulates
+	var game_loop;
+    var currLevel;
+	var loopTime;
+
+	// SET ADJUSTABLE PARAMETERS HERE that will NOT change during the course of the game.
+	var bigTree = 3;       // number of bigTree obstacles
+	var startFood = 10;      // number of foods to start with
+	var startLoopTime = 60; // how fast to start loopTime when game starts/restarts.
+
+	var holdPoint = 5;
+	var wall_length = 30;
+	var total_Score = 0;
+	var food_to_gate = 7;
+	var gate_open = false;
+
+	var stop_Function = false;
+	var food_left;
+
+	function init()
+	{
+
+		$("#startMenu").hide();
+		$("#restartMenu").hide();
+		$("#highScoreMenu").hide();
+		$(".playing").show();
+
+		foodArray = [];
+		obstacleArray = [];
+		stop_Function = false;
+
+		d = "right"; //default direction
+		create_snake();
+
+		for( var i = 0; i < startFood; i++){
+			create_food();
+		}
+
+		for( var i = 0; i < bigTree; i++){
+			create_bigTree();
+		}
+
+		create_wall();
+
+		score = 0;
+		total_Score = 0;
+		currLevel = 1;
+		
+		//Lets move the snake now using a timer which will trigger the paint function
+		//every "loopTime" ms
+		loopTime = startLoopTime;
+		if(typeof game_loop != "undefined") clearInterval(game_loop);
+		game_loop = setInterval(paint, loopTime);
+	}
+
+	$("#btnStart").click(function(){
+		init();
+	})
+
+	$("#btnRestart").click(function(){
+		init();
+	})
+
+	$("#btnHighScore").click(function(){
+		showHighScores();
+	})
+
+	
+	function create_snake()
+	{
+		var length = 5; //Length of the snake
+		snake_array = []; //Empty array to start with
+
+		for(var i = length-1; i>=0; i--)
+		{
+			//This will create a horizontal snake starting from the top left
+			snake_array.push({x: i, y:0});
+		}
+	}
+	
+	//Lets create the food now
+	function create_food()
+	{
+		var food = {
+			x: Math.round(Math.random()*(w-cw)/cw), 
+			y: Math.round(Math.random()*(h-cw)/cw-6), 
+		};
+
+		foodArray.push(food);
+		//This will create a cell with x/y between 0-44
+		//Because there are 45(450/10) positions accross the rows and columns
+	}
+	function create_tree()
+	{
+		var tree = {
+			x: Math.round(Math.random()*(w-cw)/cw), 
+			y: Math.round(Math.random()*(h-cw)/cw), 
+
+		};
+		obstacleArray.push(tree);
+	}
+
+	function create_wall()
+	{
+		for(var i = 0; i < wall_length; i ++){
+			var wall = {
+				x: 8 + i,
+				y: 40,
+			};
+			obstacleArray.push(wall);
+		}
+	}
+	function create_gate()
+	{
+		console.warn("hello");
+		for(var i = 0; i < 4; i++){
+			var gate = {
+				x: 20,
+				y: 41 + i,
+			};
+			gateArray.push(gate);
+		}
+
+	}
+
+	function create_bigTree()
+	{
+		var tree = {
+			x: Math.round(Math.random()*(w-cw)/cw), 
+			y: Math.round(Math.random()*(h-cw)/cw-6), 
+		};
+		obstacleArray.push(tree);
+
+		var tree1 = {
+			x: tree.x + 1,
+			y: tree.y,
+		}
+		obstacleArray.push(tree1);
+
+		tree1 = {
+			x: tree.x,
+			y: tree.y + 1,
+		}
+		obstacleArray.push(tree1);
+
+		tree1 = {
+			x: tree.x + 1,
+			y: tree.y + 1,
+		}
+		obstacleArray.push(tree1);
+
+
+		
+	}
+	
+	//Lets paint the snake now
+	function paint()
+	{
+		//To avoid the snake trail we need to paint the BG on every frame 
+		//Lets paint the canvas now
+
+
+
+		ctx.fillStyle = "white";
+		ctx.fillRect(0, 0, w, h);
+		ctx.strokeStyle = "black";
+		ctx.strokeRect(0, 0, w, h);
+
+		ctx1.fillStyle = "white";
+		ctx1.fillRect(0, 0, w1, h1);
+		ctx1.strokeStyle = "black";
+		ctx1.strokeRect(0, 0, w1, h1);
+
+		//The movement code for the snake to come here.
+		//Pop out the tail cell and place it infront of the head cell
+		var nx = snake_array[0].x;
+		var ny = snake_array[0].y;
+		//These were the position of the head cell.
+		//We will increment it to get the new head position
+		//Lets add proper direction based movement now
+		if(d == "right") nx++;
+		else if(d == "left") nx--;
+		else if(d == "up") ny--;
+		else if(d == "down") ny++;
+		
+
+
+
+		//Lets add the game over clauses now
+		//This will restart the game if the snake hits the wall
+		//Lets add the code for body collision
+		//Now if the head of the snake bumps into its body, the game will restart
+		if(nx == -1 || nx == w/cw || ny == -1 || ny == h/cw || check_collision(nx, ny, snake_array, obstacleArray))
+		{
+			console.warn("finished");
+			restartGame();
+
+		}
+
+
+		if(check_collision(nx, ny , [], gateArray)){
+
+			hit_gate();
+		}
+		//Lets write the code to make the snake eat the food
+		//The logic is simple
+		//If the new head position matches with that of the food,
+		//Create a new head instead of moving the tail
+		var foodCheck = false;
+
+		for (var i = 0; i < foodArray.length; i++){
+			if(nx == foodArray[i].x && ny == foodArray[i].y){
+				foodArray.splice(i,1);
+				foodCheck = true;
+
+			}
+		}
+
+		if(foodCheck == true)
+		{
+			var tail = {x: nx, y: ny};
+			score++;
+			//Create new food
+			create_food();
+
+		}
+		else
+		{
+			var tail = snake_array.pop(); //pops out the last cell
+			tail.x = nx; tail.y = ny;
+		}
+		//The snake can now eat the food.
+		//check to see if snake has eaten enough food, if so, let gate appear.
+		if((snake_array.length-holdPoint+1) == food_to_gate){
+			gate_open = true;
+		}
+
+		//gate code
+		if(gate_open === true){
+			create_gate();
+
+
+		}
+
+		snake_array.unshift(tail); //puts back the tail as the first cell
+		for (var i = 0; i < obstacleArray.length; i++){
+			paint_obstacle(obstacleArray[i].x, obstacleArray[i].y);
+		}
+
+		
+		for(var i = 0; i < holdPoint; i++)
+		{
+			if(i  == 0){
+				var c = snake_array[i];
+				paint_head(c.x, c.y);
+
+			}else{
+
+				var c = snake_array[i];
+				//Lets paint 10px wide cells
+				paint_cell(c.x, c.y);
+			}		
+		}
+	
+		for(var i = holdPoint; i < snake_array.length; i++)
+		{
+			var c = snake_array[i];
+			//Lets paint 10px wide cells
+			//IF STATEMENT!!!!!
+			if(gate_open === true){
+				paint_gate(c.x, c.y);
+
+			}else{
+				paint_food(c.x, c.y);
+			}
+		}
+		
+
+		//Lets paint the food
+		if(gate_open === false){
+
+			for (var i = 0; i < foodArray.length; i++){
+				paint_food(foodArray[i].x, foodArray[i].y);
+			}
+		}else{}
+
+
+		for (var i = 0; i < gateArray.length; i++){
+			paint_gate(gateArray[i].x, gateArray[i].y);
+		}
+
+
+
+		//Lets paint the score
+		var score_text = "Score: " + score * 10;  
+		var speed_text = "Speed: " + loopTime;
+		var food_text = "Start Food: " + startFood;
+		var level_text = "LEVEL " + currLevel;
+		//var totalScore_text = "Total Score " + total_Score * 10;
+
+		var snake_food = snake_array.length - holdPoint;
+
+		var food_left_text = "Food Left " + food_left;
+		food_left = food_to_gate - snake_food;
+		if(food_left < 0){
+			food_left = 0;
+		}
+
+
+		ctx1.fillStyle = "blue";
+		ctx.fillStyle = "black";
+
+		ctx.fillText(score_text, 5, h-5);
+		ctx.fillText(speed_text, 390, h-5);
+		ctx.fillText(food_text, 180, h-5);
+
+		ctx1.font = '20px Georgia';
+		ctx1.fillText(score_text, 20, 20);
+		ctx1.fillText(food_left_text, 20, 40);
+		//ctx1.fillText(totalScore_text, 240, 20);
+
+		ctx1.font = '23px Georgia';
+		ctx1.fillStyle = "red";
+
+
+		ctx1.fillText(level_text, 200, 25);
+
+		//ctx1.fillText(level_text, 180, 15);
+
+		if(foodCheck == true){
+			clearInterval(game_loop);
+		game_loop = setInterval(paint, loopTime);
+		}
+
+	}
+	// show restart menu
+	function restartGame(){
+			//restart game
+			clearInterval(game_loop);
+			//$("#startMenu").show();
+			$("#restartMenu").show();
+			$("#restartMenu").removeClass('hidden');
+
+
+
+			//$(".playing").hide();
+
+			//Lets organize the code a bit now.
+			return;
+	}
+
+	
+
+	//Lets first create a generic function to paint cells
+	function paint_head(x, y)
+	{
+		ctx.fillStyle = "blue";
+		x = x * cw;
+		y = y * cw;
+		ctx.beginPath();
+		if (d == "right"){
+			ctx.moveTo(x, y);
+			ctx.lineTo(x+10, y+5);
+			ctx.lineTo(x+0, y+10);
+
+		}else if (d == "left"){
+			ctx.moveTo(x+10, y);
+			ctx.lineTo(x+0, y+5);
+			ctx.lineTo(x+10, y+10);
+
+		}else if (d == "down"){
+			ctx.moveTo(x, y);
+			ctx.lineTo(x+5, y+10);
+			ctx.lineTo(x+10, y+0);
+
+		}else if (d == "up"){
+			ctx.moveTo(x, y+10);
+			ctx.lineTo(x+5, y+0);
+			ctx.lineTo(x+10, y+10);
+		}
+		ctx.closePath();
+		ctx.fill();
+	}
+
+	
+	function paint_cell(x, y)
+	{
+		ctx.fillStyle = "blue";
+		ctx.fillRect(x*cw, y*cw, cw, cw);
+		//ctx.strokeStyle = "white";
+		//ctx.strokeRect(x*cw, y*cw, cw, cw);
+	}
+	function paint_food(x, y)
+	{
+		ctx.fillStyle = "red";
+		ctx.fillRect(x*cw, y*cw, cw, cw);
+		ctx.strokeStyle = "black";
+		ctx.strokeRect(x*cw, y*cw, cw, cw);
+	}
+	function paint_obstacle(x, y)
+	{
+		ctx.fillStyle = "green";
+		ctx.fillRect(x*cw, y*cw, cw, cw);
+		ctx.strokeStyle = "brown";
+		ctx.strokeRect(x*cw, y*cw, cw, cw);
+	}
+
+	function paint_gate(x, y)
+	{
+		ctx.fillStyle = "yellow";
+		ctx.fillRect(x*cw, y*cw, cw, cw);
+		ctx.strokeStyle = "black";
+		ctx.strokeRect(x*cw, y*cw, cw, cw);
+	}
+	
+	function check_collision(x, y, array, collideArray)
+	{
+		//This function will check if the provided x/y coordinates exist
+		//in an array of cells or not
+		for(var i = 0; i < array.length; i++)
+		{
+			if(array[i].x == x && array[i].y == y)
+			 return true;
+		}
+		for(var i = 0; i < collideArray.length; i++)
+		{
+			if(collideArray[i].x == x && collideArray[i].y == y)
+			 return true;
+		}
+		return false;
+	}
+	function hit_gate(){
+
+		snake_array.splice(holdPoint,snake_array.length - holdPoint);	
+		total_Score = total_Score + score;
+		score = 0;
+		gate_open = false;
+		gateArray = [];
+
+		// now recreate the big trees
+		obstacleArray = [];
+
+		if(currLevel == 5){
+			
+		}
+
+		currLevel++;
+
+		var currBigTree = currLevel * 3;
+		for( var i = 0; i < currBigTree; i++){
+			create_bigTree();
+		}
+		create_wall();
+
+		loopTime = loopTime - 4;
+
+
+
+
+
+	}
+
+	function showHighScores(){
+		$("#startMenu").hide();
+		$("#restartMenu").hide();
+		$("#highScoreMenu").show();
+
+	}
+	
+	//Lets add the keyboard controls now
+	$(document).keydown(function(e){
+		var key = e.which;
+		//We will add another clause to prevent reverse gear
+		if(key == "37" && d != "right") d = "left";
+		else if(key == "38" && d != "down") d = "up";
+		else if(key == "39" && d != "left") d = "right";
+		else if(key == "40" && d != "up") d = "down";
+		//The snake is now keyboard controllable
+	})
+	
+	
+	
+})
+</script>
