@@ -16,27 +16,26 @@
 	<canvas id="canvas" width="450" height="450" ></canvas>
 </div>
 
-<div class = 'hidden' id = 'restartMenu' style = "text-align:center">
+<div id = 'restartMenu' class = 'hidden' style = "text-align:center">
 	<h1 id = "gameOver">GAME OVER<h1>
 	<a href = "#" id = "btnRestart">RESTART</a> 
 	<a href = "#" id = "btnHighScore">High Scores</a>
 </div>
 
 <div id = "highScoreMenu"class = 'hidden' style = "text-align:center" >
-	<table id = 'highScoreTable' >
-	  <tr>
-	    <td>Jill</td>
-	    <td>Smith</td> 
-	    <td>50</td>
-	  </tr>
-	  <tr>
-	    <td>Eve</td>
-	    <td>Jackson</td> 
-	    <td>94</td>
-	  </tr>
+	<table id = "highScoreTable" >
+		<thead>
+		  <tr>
+		  	<th>Name</th>
+		  	<th>Score</th>	
+		  </tr>
+		</thead>
+	  	<tbody>
+	  	</tbody>
 	</table>
 
-	<a href = "#" id = "goBack">GO BACK</a>
+	<a href = "#" id = "btnClearScores">CLEAR HIGH SCORES</a>
+	<a href = "#" id = "btnGoBack">GO BACK</a>
 
 </div>
 
@@ -48,10 +47,12 @@
 <script type = "text/javascript">
 
 // TO DO LIST
-// set up high scores menu
+// style start button
 // make red food not conflict with trees
-// separate restart buttons from high schores button
-//  
+
+// separate restart buttons from high scores button --> CHECK
+//  add functionality to BACK button --> CHECK
+// add clear high score button and functionality --> CHECK
 
 $(document).ready(function(){
 
@@ -130,6 +131,8 @@ $(document).ready(function(){
 		game_loop = setInterval(paint, loopTime);
 	}
 
+
+	// Assign functions to buttons here.
 	$("#btnStart").click(function(){
 		init();
 	})
@@ -142,7 +145,19 @@ $(document).ready(function(){
 		showHighScores();
 	})
 
-	
+	$("#btnGoBack").click(function() {
+		goBack();
+	})
+
+	$("#btnClearScores").click(function() {
+		clearScores();
+	})
+
+
+	//
+	//// FUNCTIONS TO CREATE ALL OBJECTS  ////////////////////////////////////////////////////////////////
+	//
+
 	function create_snake()
 	{
 		var length = 5; //Length of the snake
@@ -155,7 +170,6 @@ $(document).ready(function(){
 		}
 	}
 	
-	//Lets create the food now
 	function create_food()
 	{
 		var food = {
@@ -167,6 +181,7 @@ $(document).ready(function(){
 		//This will create a cell with x/y between 0-44
 		//Because there are 45(450/10) positions accross the rows and columns
 	}
+
 	function create_tree()
 	{
 		var tree = {
@@ -187,9 +202,9 @@ $(document).ready(function(){
 			obstacleArray.push(wall);
 		}
 	}
+
 	function create_gate()
 	{
-		console.warn("hello");
 		for(var i = 0; i < 4; i++){
 			var gate = {
 				x: 20,
@@ -197,7 +212,6 @@ $(document).ready(function(){
 			};
 			gateArray.push(gate);
 		}
-
 	}
 
 	function create_bigTree()
@@ -225,18 +239,17 @@ $(document).ready(function(){
 			y: tree.y + 1,
 		}
 		obstacleArray.push(tree1);
-
-
 		
 	}
 	
-	//Lets paint the snake now
+
+	//
+	//// MAIN PAINT FUNCTION, Includes collision check /////////////////////////////////////////////////////////////////////
+	//
 	function paint()
 	{
 		//To avoid the snake trail we need to paint the BG on every frame 
 		//Lets paint the canvas now
-
-
 
 		ctx.fillStyle = "white";
 		ctx.fillRect(0, 0, w, h);
@@ -261,8 +274,6 @@ $(document).ready(function(){
 		else if(d == "down") ny++;
 		
 
-
-
 		//Lets add the game over clauses now
 		//This will restart the game if the snake hits the wall
 		//Lets add the code for body collision
@@ -274,7 +285,7 @@ $(document).ready(function(){
 
 		}
 
-
+		// check gate collision
 		if(check_collision(nx, ny , [], gateArray)){
 
 			hit_gate();
@@ -315,24 +326,19 @@ $(document).ready(function(){
 		//gate code
 		if(gate_open === true){
 			create_gate();
-
-
 		}
 
 		snake_array.unshift(tail); //puts back the tail as the first cell
 		for (var i = 0; i < obstacleArray.length; i++){
 			paint_obstacle(obstacleArray[i].x, obstacleArray[i].y);
 		}
-
 		
 		for(var i = 0; i < holdPoint; i++)
 		{
 			if(i  == 0){
 				var c = snake_array[i];
 				paint_head(c.x, c.y);
-
 			}else{
-
 				var c = snake_array[i];
 				//Lets paint 10px wide cells
 				paint_cell(c.x, c.y);
@@ -352,21 +358,16 @@ $(document).ready(function(){
 			}
 		}
 		
-
 		//Lets paint the food
 		if(gate_open === false){
-
 			for (var i = 0; i < foodArray.length; i++){
 				paint_food(foodArray[i].x, foodArray[i].y);
 			}
 		}else{}
 
-
 		for (var i = 0; i < gateArray.length; i++){
 			paint_gate(gateArray[i].x, gateArray[i].y);
 		}
-
-
 
 		//Lets paint the score
 		var score_text = "Score: " + score * 10;  
@@ -383,7 +384,6 @@ $(document).ready(function(){
 			food_left = 0;
 		}
 
-
 		ctx1.fillStyle = "blue";
 		ctx.fillStyle = "black";
 
@@ -394,15 +394,11 @@ $(document).ready(function(){
 		ctx1.font = '20px Georgia';
 		ctx1.fillText(score_text, 20, 20);
 		ctx1.fillText(food_left_text, 20, 40);
-		//ctx1.fillText(totalScore_text, 240, 20);
 
 		ctx1.font = '23px Georgia';
 		ctx1.fillStyle = "red";
 
-
 		ctx1.fillText(level_text, 200, 25);
-
-		//ctx1.fillText(level_text, 180, 15);
 
 		if(foodCheck == true){
 			clearInterval(game_loop);
@@ -410,25 +406,11 @@ $(document).ready(function(){
 		}
 
 	}
-	// show restart menu
-	function restartGame(){
-			//restart game
-			clearInterval(game_loop);
-			//$("#startMenu").show();
-			$("#restartMenu").show();
-			$("#restartMenu").removeClass('hidden');
 
 
-
-			//$(".playing").hide();
-
-			//Lets organize the code a bit now.
-			return;
-	}
-
-	
-
-	//Lets first create a generic function to paint cells
+	//
+	// PAINT SUB FUNCTIONS /////////////////////////////////////////////////////////////////////
+	//
 	function paint_head(x, y)
 	{
 		ctx.fillStyle = "blue";
@@ -490,6 +472,9 @@ $(document).ready(function(){
 		ctx.strokeRect(x*cw, y*cw, cw, cw);
 	}
 	
+
+	// MORE SUB FUNCTIONS, 
+
 	function check_collision(x, y, array, collideArray)
 	{
 		//This function will check if the provided x/y coordinates exist
@@ -531,19 +516,94 @@ $(document).ready(function(){
 
 		loopTime = loopTime - 4;
 
+	}
 
 
+	// Runs when game ends, shows restart menu, 
+	function restartGame(){
+			//restart game
+			clearInterval(game_loop);
 
+			addScore(score * 10);
+
+			setTimeout(function(){
+    		}, 500);
+
+			loadScores();
+
+			$("#restartMenu").show();
+			$("#restartMenu").removeClass('hidden');
+
+			return;
+	}
+
+
+	// Runs in restart game function. Adds score to local storage.
+	function addScore(currscore){
+		// add score to local storage score array.
+		var currname = "Player1";
+
+		var List;
+		if(localStorage.getItem('scoreList')){
+			List = JSON.parse(localStorage.getItem('scoreList'));
+		}else{
+			List = [];
+		}
+		List.push({name: currname, score: currscore});
+		localStorage.setItem('scoreList', JSON.stringify(List));
+		console.log("SAVED!" + currscore);
 
 	}
 
+	// Runs in restart game function. Loads scores from local storage to populate table.
+	function loadScores(){
+
+		$('#highScoreTable tbody tr').remove();
+
+		var table = $('#highScoreTable');
+		var list;
+		if(localStorage.getItem('scoreList')){
+			list = JSON.parse(localStorage.getItem('scoreList'));
+			console.log("SOMETHING IN LOCAL STORAGE!!" + list.length);
+		}else{
+			console.log("NOTHING IN LOCAL STORAGE!");
+			list = [];
+		}
+
+		for (var i = 0; i < list.length; i++){
+			var name = list[i].name; 
+			var score = list[i].score;
+			table.append('<tr><td>'+name+'</td><td>'+score+'</td></tr>');
+		};
+
+	}
+
+
+	// 
+	//// BUTTON FUNCTIONS ///////////////////////////////////////////////////////////////////////////
+	//
 	function showHighScores(){
 		$("#startMenu").hide();
 		$("#restartMenu").hide();
 		$("#highScoreMenu").show();
+	}
 
+	function clearScores(){
+		$('#highScoreTable tbody tr').remove();
+		if(localStorage.getItem('scoreList')){
+			var list = [];
+			localStorage.setItem('scoreList', JSON.stringify(list));
+		}else{}		
+	}
+
+	function goBack(){
+			$("#restartMenu").show();
+			$("#restartMenu").removeClass('hidden');
+			$("#highScoreMenu").hide();
 	}
 	
+
+
 	//Lets add the keyboard controls now
 	$(document).keydown(function(e){
 		var key = e.which;
@@ -554,8 +614,6 @@ $(document).ready(function(){
 		else if(key == "40" && d != "up") d = "down";
 		//The snake is now keyboard controllable
 	})
-	
-	
-	
+		
 })
 </script>
