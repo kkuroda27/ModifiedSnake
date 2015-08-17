@@ -1,7 +1,7 @@
 
 
 <!-- Jquery -->
-<script src = "jquery.min.js"> </script>
+<script src = "js/jquery.min.js"> </script>
 
 <!-- Lets make a simple snake game -->
 <div id = "startMenu" style = "text-align:center"> 
@@ -40,19 +40,22 @@
 </div>
 
 <head>
-<link rel="stylesheet" type="text/css" href="Snake.css">
+<link rel="stylesheet" type="text/css" href="css/Snake.css">
 </head>
 
 
 <script type = "text/javascript">
 
 // TO DO LIST
-// style start button
 // make red food not conflict with trees
+// restarting doesn't work much sometime, gate starts as yellow?
+// fix score. score needs to update even if you don't get to gate.
+
 
 // separate restart buttons from high scores button --> CHECK
 //  add functionality to BACK button --> CHECK
 // add clear high score button and functionality --> CHECK
+// style start button  --> check
 
 $(document).ready(function(){
 
@@ -110,12 +113,14 @@ $(document).ready(function(){
 		d = "right"; //default direction
 		create_snake();
 
-		for( var i = 0; i < startFood; i++){
-			create_food();
-		}
+
 
 		for( var i = 0; i < bigTree; i++){
 			create_bigTree();
+		}
+
+		for( var i = 0; i < startFood; i++){
+			create_food();
 		}
 
 		create_wall();
@@ -172,6 +177,7 @@ $(document).ready(function(){
 	
 	function create_food()
 	{
+
 		var food = {
 			x: Math.round(Math.random()*(w-cw)/cw), 
 			y: Math.round(Math.random()*(h-cw)/cw-6), 

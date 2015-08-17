@@ -15,7 +15,7 @@
 #highScoreMenu{
 }
 
-#btnRestart, #btnHighScore{
+#btnRestart, #btnHighScore, #btnStart{
 	position: relative;
 	z-index: 1;
 	display: block;
@@ -28,6 +28,11 @@
 	text-decoration: none;
 	text-align: center;
 	margin: 0 auto;
+
+}
+
+#btnStart{
+	top: 200px;
 
 }
 
